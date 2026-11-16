@@ -1,14 +1,14 @@
-# AI Contract Guard 🛡️
+# ClauseCheck 🛡️
 
-An AI-powered contract, lease, and policy scanner for Android & iOS built with Flutter and Google Gemini 1.5 Pro.
+An AI-powered contract, lease, and policy scanner for Android & iOS built with Flutter and Google Gemini.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-ai_contract_guard/
-├── backend/                   # Node.js + Express + Gemini 1.5 Pro API Service
+clause_check/
+├── backend/                   # Node.js + Express + Gemini 3.5 Flash API Service
 │   ├── server.js              # Server handling multimodal uploads & Gemini prompt
 │   ├── package.json           # Dependencies (@google/generative-ai, multer, express)
 │   └── .env.example           # API key configuration
@@ -21,7 +21,7 @@ ai_contract_guard/
 │   │   ├── result_screen.dart # Visual risk score meter, red flags & disclaimer
 │   │   └── paywall_screen.dart# Monetization paywall with weekly & annual plans
 │   └── services/
-│       ├── api_service.dart   # Multipart API client communicating with backend
+│       ├── api_service.dart   # Multi-candidate API client communicating with backend
 │       └── storage_service.dart# SharedPreferences for free scan limits & PRO status
 └── android/                   # Android manifest with Camera and Internet permissions
 ```

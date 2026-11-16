@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Icon(Icons.shield_rounded, color: Colors.indigoAccent),
             const SizedBox(width: 8),
-            const Text('AI Contract Guard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text('ClauseCheck', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
         actions: [

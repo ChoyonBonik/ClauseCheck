@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_contract_guard/main.dart';
+import 'package:clause_check/main.dart';
 
 void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {
-    await tester.pumpWidget(const AiContractGuardApp());
-    expect(find.text('AI Contract Guard'), findsOneWidget);
+    await tester.pumpWidget(const ClauseCheckApp());
+    expect(find.text('ClauseCheck'), findsOneWidget);
   });
 }

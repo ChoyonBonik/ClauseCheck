@@ -3,16 +3,16 @@ import 'screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AiContractGuardApp());
+  runApp(const ClauseCheckApp());
 }
 
-class AiContractGuardApp extends StatelessWidget {
-  const AiContractGuardApp({super.key});
+class ClauseCheckApp extends StatelessWidget {
+  const ClauseCheckApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI Contract Guard',
+      title: 'ClauseCheck',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

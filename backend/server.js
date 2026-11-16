@@ -14,10 +14,9 @@ app.use(express.json({ limit: '50mb' }));
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+  limits: { fileSize: 30 * 1024 * 1024 } // 30MB max
 });
 
-// Initialize Gemini API
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
   console.warn("⚠️ Warning: GEMINI_API_KEY environment variable is not set!");
@@ -59,19 +58,49 @@ You must respond strictly in JSON format matching this schema:
 `;
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'AI Contract Guard API', model: 'gemini-1.5-pro' });
+  res.json({ status: 'ok', service: 'ClauseCheck API', model: 'gemini-3.5-flash' });
 });
+
+function detectMimeType(file) {
+  let mime = file.mimetype;
+  const originalName = file.originalname || '';
+  const ext = originalName.split('.').pop().toLowerCase();
+
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'txt') return 'text/plain';
+
+  // Check magic bytes if mime is octet-stream or missing
+  if (!mime || mime === 'application/octet-stream') {
+    if (file.buffer && file.buffer.length >= 4) {
+      if (file.buffer.toString('ascii', 0, 4) === '%PDF') {
+        return 'application/pdf';
+      }
+      if (file.buffer[0] === 0xFF && file.buffer[1] === 0xD8) {
+        return 'image/jpeg';
+      }
+      if (file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && file.buffer[2] === 0x4E && file.buffer[3] === 0x47) {
+        return 'image/png';
+      }
+    }
+    return 'application/pdf'; // Default fallback for documents
+  }
+
+  return mime;
+}
 
 // Main scan endpoint accepting PDF, images, or raw text
 app.post('/api/scan', upload.array('files', 10), async (req, res) => {
   try {
-    if (!apiKey) {
+    if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({
-        error: 'GEMINI_API_KEY is not configured on the server. Please set it in .env'
+        error: 'GEMINI_API_KEY is not configured on the server. Please check .env'
       });
     }
 
-    const { contract_text, category } = req.body;
+    const { contract_text, category } = req.body || {};
     const files = req.files || [];
 
     if (files.length === 0 && (!contract_text || contract_text.trim() === '')) {
@@ -80,8 +109,9 @@ app.post('/api/scan', upload.array('files', 10), async (req, res) => {
       });
     }
 
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
+      model: modelName,
       systemInstruction: SYSTEM_INSTRUCTION,
       generationConfig: {
         responseMimeType: 'application/json',
@@ -91,7 +121,7 @@ app.post('/api/scan', upload.array('files', 10), async (req, res) => {
 
     const promptParts = [];
 
-    // Add category context if supplied (e.g. "tenant_lease", "freelance_sow")
+    // Add category context
     if (category) {
       promptParts.push({ text: `Document Category Focus: ${category}\n` });
     }
@@ -103,15 +133,17 @@ app.post('/api/scan', upload.array('files', 10), async (req, res) => {
 
     // Add files (PDFs or images) directly to multimodal parts
     for (const file of files) {
+      const mime = detectMimeType(file);
+      console.log(`[Upload] Processing file: ${file.originalname || 'unnamed'}, detected mime: ${mime}, size: ${file.size} bytes`);
       promptParts.push({
         inlineData: {
           data: file.buffer.toString('base64'),
-          mimeType: file.mimetype
+          mimeType: mime
         }
       });
     }
 
-    console.log(`[Scan] Processing request: ${files.length} file(s), text length: ${contract_text ? contract_text.length : 0}`);
+    console.log(`[Scan] Live AI Analysis requested: ${files.length} file(s), text length: ${contract_text ? contract_text.length : 0}`);
 
     const result = await model.generateContent(promptParts);
     const responseText = result.response.text();
@@ -126,12 +158,12 @@ app.post('/api/scan', upload.array('files', 10), async (req, res) => {
   } catch (err) {
     console.error('[Scan Error]', err);
     return res.status(500).json({
-      error: 'Failed to analyze contract',
+      error: 'Failed to analyze contract with Gemini',
       details: err.message
     });
   }
 });
 
 app.listen(port, () => {
-  console.log(`🚀 AI Contract Guard Backend running on http://localhost:${port}`);
+  console.log(`🚀 ClauseCheck Backend running on http://localhost:${port} using Gemini Live`);
 });
