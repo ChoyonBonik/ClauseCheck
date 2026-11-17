@@ -80,4 +80,49 @@ class ApiService {
 
     throw lastError ?? Exception('Could not connect to backend server. Make sure node server.js is running.');
   }
+
+  static Future<String> askContractQuestion({
+    required String documentContext,
+    required List<Map<String, String>> chatHistory,
+    required String message,
+  }) async {
+    Exception? lastError;
+
+    for (final base in candidateUrls) {
+      try {
+        final uri = Uri.parse('$base/api/chat');
+        final response = await http
+            .post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'document_context': documentContext,
+                'chat_history': chatHistory,
+                'message': message,
+              }),
+            )
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () => throw Exception('Chat request timed out.'),
+            );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['success'] == true && data['reply'] != null) {
+            return data['reply'] as String;
+          } else {
+            throw Exception(data['error'] ?? 'Invalid chat response');
+          }
+        } else {
+          final data = json.decode(response.body);
+          throw Exception(data['error'] ?? 'Server error: ${response.statusCode}');
+        }
+      } catch (e) {
+        lastError = Exception('Failed on $base: ${e.toString()}');
+        continue;
+      }
+    }
+
+    throw lastError ?? Exception('Could not connect to backend server for chat.');
+  }
 }

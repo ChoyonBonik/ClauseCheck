@@ -83,4 +83,37 @@ class ScanResult {
       scannedAt: DateTime.now(),
     );
   }
+
+  String toContextString() {
+    final buffer = StringBuffer();
+    buffer.writeln('Document Type: $documentType');
+    buffer.writeln('Risk Score: $riskScore/100 (Verdict: $verdict)');
+    if (executiveSummary.isNotEmpty) {
+      buffer.writeln('\nExecutive Summary:');
+      for (final s in executiveSummary) {
+        buffer.writeln('- $s');
+      }
+    }
+    if (redFlags.isNotEmpty) {
+      buffer.writeln('\nIdentified Red Flags & Clauses:');
+      for (final f in redFlags) {
+        buffer.writeln('• ${f.title} [${f.riskLevel}]: "${f.quotedText}"');
+        buffer.writeln('  Explanation: ${f.plainEnglishExplanation}');
+        buffer.writeln('  Counter-Action: ${f.recommendedCounterAction}');
+      }
+    }
+    if (hiddenCostsOrPenalties.isNotEmpty) {
+      buffer.writeln('\nHidden Costs or Penalties:');
+      for (final c in hiddenCostsOrPenalties) {
+        buffer.writeln('- $c');
+      }
+    }
+    if (missingProtections.isNotEmpty) {
+      buffer.writeln('\nMissing Protections:');
+      for (final p in missingProtections) {
+        buffer.writeln('- $p');
+      }
+    }
+    return buffer.toString();
+  }
 }

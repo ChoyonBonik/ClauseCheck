@@ -164,6 +164,74 @@ app.post('/api/scan', upload.array('files', 10), async (req, res) => {
   }
 });
 
+// Interactive "Ask the Contract" Q&A Chat endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server.' });
+    }
+
+    const { document_context, chat_history = [], message } = req.body || {};
+
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ error: 'Message cannot be empty.' });
+    }
+
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    const chatSystemInstruction = `
+You are the ClauseCheck AI Legal Assistant. You are having an interactive conversation with a user about their contract/document.
+You have been provided with the contract analysis context and clauses below:
+---
+${document_context || 'No specific document context provided.'}
+---
+
+Your Guidelines:
+1. Answer the user's questions directly and accurately based on the contract context and general standard consumer protection practices.
+2. If the contract explicitly covers the question, cite the clause or state what it says in plain, clear English.
+3. If the contract does NOT mention what the user asks about (e.g. pets, subletting, grace period), clearly state that this document is silent on that issue and explain what risks or standard rights that implies.
+4. Keep answers concise, actionable, and friendly. Avoid overly dense legal jargon.
+5. Remind the user if a clause poses extreme risk or hidden liability.
+`;
+
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      systemInstruction: chatSystemInstruction,
+      generationConfig: {
+        temperature: 0.3,
+      }
+    });
+
+    const contents = [];
+    for (const h of chat_history) {
+      contents.push({
+        role: (h.role === 'assistant' || h.role === 'model') ? 'model' : 'user',
+        parts: [{ text: h.text }]
+      });
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    console.log(`[Chat] Query: "${message.substring(0, 50)}..." (History length: ${chat_history.length})`);
+
+    const result = await model.generateContent({ contents });
+    const reply = result.response.text();
+
+    return res.json({
+      success: true,
+      reply: reply
+    });
+  } catch (err) {
+    console.error('[Chat Error]', err);
+    return res.status(500).json({
+      error: 'Failed to process chat message',
+      details: err.message
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log(`🚀 ClauseCheck Backend running on http://localhost:${port} using Gemini Live`);
 });

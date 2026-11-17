@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../models/scan_result.dart';
+import 'chat_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final ScanResult result;
@@ -25,6 +26,28 @@ class ResultScreen extends StatelessWidget {
         elevation: 0,
         title: Text(result.documentType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.forum_outlined, color: Colors.indigoAccent),
+            tooltip: 'Ask Document Questions',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ChatScreen(scanResult: result)),
+              );
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.forum_rounded),
+        label: const Text('Ask Contract AI', style: TextStyle(fontWeight: FontWeight.bold)),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => ChatScreen(scanResult: result)),
+          );
+        },
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -224,6 +247,58 @@ class ResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
+
+            // Interactive Chat Callout Card
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => ChatScreen(scanResult: result)),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E1B4B), Color(0xFF1E293B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.indigoAccent.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.indigoAccent.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.forum_rounded, color: Colors.indigoAccent, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Ask Questions About This Contract',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Ask about cancellation rules, pets, hidden penalties & more',
+                            style: TextStyle(color: Colors.white60, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.indigoAccent, size: 16),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // Mandatory Legal Disclaimer
             Container(
